@@ -20,7 +20,7 @@ raw_payment_data.csv      -> raw synthetic data (with duplicates / blanks)
 clean_payment_data.csv    -> cleaned data used by Power BI
 output/                   -> query results as CSV
 Payment_Disbursement_Dashboard.pbix
-screenshots/dashboard.png
+dashboard.png
 
 ## How to run
 1. Install the required libraries
@@ -35,7 +35,7 @@ creates clean_payment_data.csv, payment.db and the ouput folder
 Then open the `.pbix` in Power BI Desktop and click Refresh (update the CSV path if needed).
 
 ## Dashboard
-![Dashboard](screenshots/dashboard.png)
+![Dashboard](dashboard.png)
 
 KPIs: Total Payments, Requested Amount (INR), Approval Rate %, Processed % of Approved, Exception Rate %, Avg Approval Days.
 
