@@ -1,0 +1,7 @@
+Approval_Status,Payment_Status,total
+Approved,Processed,8769
+Approved,On Hold,565
+Approved,Rejected,470
+Approved,Unknown,303
+On Hold,Not Applicable,968
+Rejected,Not Applicable,925
