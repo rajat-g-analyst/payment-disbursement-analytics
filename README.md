@@ -13,6 +13,7 @@ An end-to-end analytics project on **synthetic** payment-request data, modelled 
 Python (pandas, numpy, Faker, sqlite3), SQL (SQLite - GROUP BY, CASE WHEN, subqueries, window functions LAG and RANK), Power BI (Power Query, DAX measures, slicers).
 
 ## Folder structure
+
 ```
 generate_data.py          -> creates raw_payment_data.csv
 clean_and_analyze.py      -> cleans data, builds payments.db, runs queries
@@ -22,6 +23,7 @@ clean_payment_data.csv    -> cleaned data used by Power BI
 output/                   -> query results as CSV
 Payment_Disbursement_Dashboard.pbix
 dashboard.png
+
 ```
 
 ## How to run
