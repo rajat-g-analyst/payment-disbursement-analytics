@@ -15,6 +15,7 @@ An end-to-end analytics project on **synthetic** payment-request data, modelled 
 Python (pandas, numpy, Faker, sqlite3), SQL (SQLite - GROUP BY, CASE WHEN, subqueries, window functions LAG and RANK), Power BI (Power Query, DAX measures, slicers), Windows Task Scheduler.
 
 ## Folder structure
+```
 generate_data.py          -> creates the monthly raw files in raw_data/
 generate_new_month.py     -> simulates the next month's raw file
 clean_and_analyze.py      -> reads all monthly files, cleans data, builds payments.db, runs queries
@@ -25,6 +26,7 @@ clean_payment_data.csv    -> cleaned data used by Power BI
 output/                   -> query results as CSV
 Payment_Disbursement_Dashboard.pbix
 dashboard.png             -> screenshot of the dashboard
+```
 
 ## How to run
 1. Install the required libraries (sqlite3 comes built in with Python):
