@@ -3,16 +3,17 @@
 -- Table: payments (built from clean_payment_data.csv by clean_and_analyze.py)
 -- Note: the data is synthetic (generated with Python), not real company data.
 
--- 1. Compare H2H and Manual payments
+-- 1. How many approved payments each method got processed
 SELECT Payment_Method,
        COUNT(*) AS total_payments,
-       ROUND(AVG(Approval_Days), 2) AS avg_approval_days,
+       SUM(CASE WHEN Approval_Status = 'Approved' THEN 1 ELSE 0 END) AS approved,
+       SUM(CASE WHEN Payment_Status = 'Processed' THEN 1 ELSE 0 END) AS processed,
        ROUND(100.0 * SUM(CASE WHEN Payment_Status = 'Processed' THEN 1 ELSE 0 END)
              / SUM(CASE WHEN Approval_Status = 'Approved' THEN 1 ELSE 0 END), 2) AS processed_pct_of_approved
 FROM payments
 GROUP BY Payment_Method;
 
--- 2. Exception rate (%) for each payment method
+-- 2. % of payments with an exception, per method
 SELECT Payment_Method,
        COUNT(*) AS total_payments,
        SUM(CASE WHEN Exception_Type != 'None' THEN 1 ELSE 0 END) AS exceptions,
@@ -21,11 +22,12 @@ SELECT Payment_Method,
 FROM payments
 GROUP BY Payment_Method;
 
--- 3. Average approval time by region
+-- 3. Average days to approve, per region (approved payments only)
 SELECT Region,
-       COUNT(*) AS total_payments,
+       COUNT(*) AS approved_payments,
        ROUND(AVG(Approval_Days), 2) AS avg_approval_days
 FROM payments
+WHERE Approval_Status = 'Approved'
 GROUP BY Region
 ORDER BY avg_approval_days DESC;
 
@@ -42,14 +44,18 @@ FROM payments
 GROUP BY Approval_Status, Payment_Status
 ORDER BY Approval_Status, total DESC;
 
--- 6. Slow approvals: approval took more than 3 days, by region
-SELECT Region, COUNT(*) AS slow_approvals
+-- 6. Approvals that took more than 3 days, per region
+SELECT Region,
+       COUNT(*) AS approved_payments,
+       SUM(CASE WHEN Approval_Days > 3 THEN 1 ELSE 0 END) AS slow_approvals,
+       ROUND(100.0 * SUM(CASE WHEN Approval_Days > 3 THEN 1 ELSE 0 END)
+             / COUNT(*), 2) AS slow_approval_pct
 FROM payments
-WHERE Approval_Days > 3
+WHERE Approval_Status = 'Approved'
 GROUP BY Region
-ORDER BY slow_approvals DESC;
+ORDER BY slow_approval_pct DESC;
 
--- 7. Monthly volume and change vs previous month (window function LAG)
+-- 7. Payments per month, and change from the previous month (LAG)
 SELECT month,
        total_payments,
        total_payments - LAG(total_payments) OVER (ORDER BY month) AS change_vs_prev_month
@@ -61,7 +67,7 @@ FROM (
 )
 ORDER BY month;
 
--- 8. Top 3 requestors by total amount (INR) in each region (RANK window function)
+-- 8. Top 3 requestors in each region (RANK)
 SELECT Region, Requestor_ID, total_amount_inr, rank_in_region
 FROM (
     SELECT Region,
@@ -74,22 +80,21 @@ FROM (
 WHERE rank_in_region <= 3
 ORDER BY Region, rank_in_region;
 
--- 9. Top 5 beneficiaries by total requested amount (INR)
+-- 9. Top 5 beneficiaries by total amount (INR)
 SELECT Beneficiary_Name,
-       COUNT(*) AS total_requests,
-       ROUND(SUM(Amount_INR), 2) AS total_requested_inr
+       Currency,
+       COUNT(*) AS total_payments,
+       ROUND(SUM(Amount_INR), 2) AS total_amount_inr
 FROM payments
-GROUP BY Beneficiary_Name
-ORDER BY total_requested_inr DESC
+GROUP BY Beneficiary_Name, Currency
+ORDER BY total_amount_inr DESC
 LIMIT 5;
 
--- 10. Exception type vs outcome (how each exception ends up)
-SELECT Exception_Type,
-       COUNT(*) AS total,
-       SUM(CASE WHEN Approval_Status = 'Approved' THEN 1 ELSE 0 END) AS approved,
-       SUM(CASE WHEN Approval_Status = 'On Hold' THEN 1 ELSE 0 END) AS on_hold,
-       SUM(CASE WHEN Approval_Status = 'Rejected' THEN 1 ELSE 0 END) AS rejected,
-       SUM(CASE WHEN Payment_Status = 'Processed' THEN 1 ELSE 0 END) AS processed
+-- 10. What happens to payments with and without an exception
+SELECT CASE WHEN Exception_Type = 'None' THEN 'No exception' ELSE 'Exception' END AS exception_flag,
+       COUNT(*) AS total_payments,
+       ROUND(100.0 * SUM(CASE WHEN Approval_Status = 'Approved' THEN 1 ELSE 0 END) / COUNT(*), 2) AS approved_pct,
+       ROUND(100.0 * SUM(CASE WHEN Approval_Status = 'On Hold' THEN 1 ELSE 0 END) / COUNT(*), 2) AS on_hold_pct,
+       ROUND(100.0 * SUM(CASE WHEN Approval_Status = 'Rejected' THEN 1 ELSE 0 END) / COUNT(*), 2) AS rejected_pct
 FROM payments
-GROUP BY Exception_Type
-ORDER BY total DESC;
+GROUP BY exception_flag;
