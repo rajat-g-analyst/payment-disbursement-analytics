@@ -8,7 +8,7 @@ import os
 import sqlite3
 import pandas as pd
 
-RAW_FILE = 'raw_payment_data.csv'
+RAW_FOLDER = 'raw_data'
 CLEAN_FILE = 'clean_payment_data.csv'
 DB_FILE = 'payments.db'
 OUTPUT_FOLDER = 'output'
@@ -17,11 +17,18 @@ OUTPUT_FOLDER = 'output'
 RATES_TO_INR = {'INR': 1, 'USD': 83, 'EUR': 90}
 
 
-def load_data(file_name):
-    # pandas treats the text 'None' as missing by default,
-    # but here 'None' means no exception, so keep it as text
-    df = pd.read_csv(file_name, keep_default_na=False, na_values=[''])
-    print(f"Loaded {len(df)} rows from {file_name}")
+def load_data(folder):
+    # reads every monthly file in the folder and joins them into one table
+    files = sorted(f for f in os.listdir(folder) if f.endswith('.csv'))
+    monthly_data = []
+    for file_name in files:
+        # pandas treats the text 'None' as missing by default,
+        # but here 'None' means no exception, so keep it as text
+        part = pd.read_csv(os.path.join(folder, file_name), keep_default_na=False, na_values=[''])
+        monthly_data.append(part)
+
+    df = pd.concat(monthly_data, ignore_index=True)
+    print(f"Loaded {len(df)} rows from {len(files)} files in '{folder}'")
     return df
 
 
@@ -207,7 +214,7 @@ def run_queries(conn, output_folder):
 
 # runs all the steps in order
 def main():
-    df = load_data(RAW_FILE)
+    df = load_data(RAW_FOLDER)
     df = clean_data(df)
     df.to_csv(CLEAN_FILE, index=False)
     conn = save_to_database(df, DB_FILE)
